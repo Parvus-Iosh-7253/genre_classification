@@ -1,7 +1,7 @@
 import mlflow
 import os
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 
 
 # This automatically reads in the configuration
@@ -20,7 +20,7 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
+        assert isinstance(config["main"]["execute_steps"], (list, ListConfig))
         steps_to_execute = config["main"]["execute_steps"]
 
     # Download step
@@ -44,7 +44,7 @@ def go(config: DictConfig):
             "main",
             parameters={
                 "input_artifact": "raw_data.parquet:latest",
-                "artifact_name": "preprocessed_data.csv"
+                "artifact_name": "preprocessed_data.csv",
                 "artifact_type": "prepro_data",
                 "artifact_description": "Data preprocessed for training"
             },
@@ -86,12 +86,12 @@ def go(config: DictConfig):
             fp.write(OmegaConf.to_yaml(config["random_forest_pipeline"]))
 
         _ = mlflow.run(
-            os.path.join(root_path, "random_forest")
+            os.path.join(root_path, "random_forest"),
             "main",
             parameters={
                 "train_data": "data_train.csv:latest",
                 "model_config": model_config,
-                "export_artifact": config["random_forst_pipeline"]["export_artifact"],
+                "export_artifact": config["random_forest_pipeline"]["export_artifact"],
                 "random_seed": config["main"]["random_seed"],
                 "val_size": config["data"]["val_size"],
                 "stratify": config["data"]["stratify"]
